@@ -16,6 +16,7 @@ public class SpriteAnimController : MonoBehaviour
 	public Material WalkUpSprite;
 	
 	public Material DeathSprite;
+	public Material DeadSprite;
 	public Material Attack1Sprite;
 	private SpriteAnimator MySpriteAnimator;
 	private rpgCharController MyRpgCharController;
