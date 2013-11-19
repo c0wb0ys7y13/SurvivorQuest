@@ -12,6 +12,7 @@ public class PlowController : MonoBehaviour
 	public GameObject ChainAttachPoint;
 	public float ChainDistanceScale;
 	public float CollisionDetectionRange;
+	public bool PlowPullable = true;
 		
 	// Use this for initialization
 	void Start () 
@@ -44,7 +45,7 @@ public class PlowController : MonoBehaviour
 	
 	void OnTriggerStay(Collider other)
 	{
-		if(other.gameObject.tag == "Player" && PlowPuller != null && collider.bounds.Contains(PlowPuller.transform.position))
+		if(PlowPullable && other.gameObject.tag == "Player" && PlowPuller != null && collider.bounds.Contains(PlowPuller.transform.position))
 		{
 			transform.position += Vector3.left * Time.deltaTime * PlowSpeed;
 			

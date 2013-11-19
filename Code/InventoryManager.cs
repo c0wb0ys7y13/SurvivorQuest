@@ -93,7 +93,7 @@ public class InventoryManager : MonoBehaviour
 		}
 		
 		//press G to throw an item on the ground
-		if(Input.GetKeyDown(KeyCode.G))
+		if(Input.GetKeyDown(KeyCode.G) && GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.None)
 		{
 			//confirm our selected inv slot has something in it
 			if(SlotObj[SelectedSlot] != null && SlotQt[SelectedSlot] > 0)

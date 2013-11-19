@@ -9,7 +9,8 @@ public class PlayerStateMachine : MonoBehaviour
 		Dead,
 		Harvesting,
 		PickingUp,
-		Attack1
+		Attack1,
+		Chatting
 	}
 	
 	public enum MovementState

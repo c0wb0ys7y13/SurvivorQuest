@@ -87,7 +87,12 @@ public class SpriteAnimController : MonoBehaviour
 				MySpriteAnimator.SetPlayBackwards(false);
 				MySpriteAnimator.SetFlipMaterial(false);
 			}
-			
+		}
+		else if(MyStateMachine.MyPlayerState == PlayerStateMachine.PlayerState.Chatting)
+		{
+			MySpriteAnimator.SpriteSheet = 	IdleDownSprite;
+			MySpriteAnimator.SetPlayBackwards(false);
+			MySpriteAnimator.SetFlipMaterial(false);	
 		}
 	}
 	
@@ -131,6 +136,12 @@ public class SpriteAnimController : MonoBehaviour
 				MySpriteAnimator.SetPlayBackwards(false);
 				MySpriteAnimator.SetFlipMaterial(false);
 			}
+		}
+		else if(MyStateMachine.MyPlayerState == PlayerStateMachine.PlayerState.Chatting)
+		{
+			MySpriteAnimator.SpriteSheet = IdleDownSprite;
+			MySpriteAnimator.SetPlayBackwards(false);
+			MySpriteAnimator.SetFlipMaterial(false);
 		}
 	}
 }
