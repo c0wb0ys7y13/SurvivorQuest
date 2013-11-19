@@ -23,6 +23,9 @@ public class ConversationManager : MonoBehaviour
 	public Vector3 WordBubbleOffset;
 	//The default starting position of text
 	public Vector3 NPCTextPosition;
+	//pause timer between a player response and the NPC text
+	public float NPCResponseTime;
+	private float NPCResponseTimer = 0;
 	
 	//The various chat texts of the NPC's
 	public string[] NpcChatText;
@@ -35,12 +38,15 @@ public class ConversationManager : MonoBehaviour
 	public Vector3 PlayerChatTextPosition;
 	public Vector3 PlayerChatCircleSize;
 	public Vector3 PlayerChatCircleAngle;
+	//pause timer between a NPC response and the Player text
+	public float PlayerResponseTime;
+	private float PlayerResponseTimer = 0;
 	//used to interpoloate player word bubbles, between 0 and 1
 	private float WordBubbleInterpolator = 1;
 	//the rate at which the word bubbles rotate
 	public float WordBubbleInterpolationRate;
 	//the direction it should be interpolating
-	public int WordBubbleInterpoleDirection;
+	private int WordBubbleInterpoleDirection;
 	//The various things the player can say in response
 	public string[] PlayerChatText;
 	//What those responses corrispond to
@@ -87,12 +93,31 @@ public class ConversationManager : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
+		if(PlayerResponseTimer > 0)
+		{
+			PlayerResponseTimer -= Time.deltaTime;	
+		}
+		
+		if(NPCResponseTimer > 0)
+		{
+			NPCResponseTimer -= Time.deltaTime;	
+		}
+		
+		if(WordBubbleInterpolator < 1f)
+		{
+			WordBubbleInterpolator += Time.deltaTime * WordBubbleInterpolationRate;
+			if(WordBubbleInterpolator > 1f)
+				WordBubbleInterpolator = 1;
+		}
+		
 		//start a chat
 		if(CanChat && Input.GetKeyDown(KeyCode.E) && !IsChatting && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.None)
 		{
 			IsChatting = true;
 			Player.GetComponent<PlayerStateMachine>().MyPlayerState = PlayerStateMachine.PlayerState.Chatting;
 			Player.GetComponent<PlayerStateMachine>().InStateTill = float.PositiveInfinity;
+			
+			PlayerResponseTimer = PlayerResponseTime;
 		}
 		//end a chat
 		else if(IsChatting && Input.GetKeyDown(KeyCode.G) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting)
@@ -123,34 +148,29 @@ public class ConversationManager : MonoBehaviour
 				IsChatting = false;
 				Player.GetComponent<PlayerStateMachine>().MyPlayerState = PlayerStateMachine.PlayerState.None;
 			}
+			
+			PlayerResponseTimer = PlayerResponseTime;
+			NPCResponseTimer = NPCResponseTime;
 		}
 		//cycle left through player chat options
-		else if(IsChatting && Input.GetKeyDown(KeyCode.A) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1)
+		else if(IsChatting && Input.GetKeyDown(KeyCode.A) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1)
 		{
 			CurrentPlayerChatText++;
 			WordBubbleInterpolator = 0;
 			WordBubbleInterpoleDirection = 1;
 		}
 		//cycle right through player chat options
-		else if(IsChatting && Input.GetKeyDown(KeyCode.D) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1)
+		else if(IsChatting && Input.GetKeyDown(KeyCode.D) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1)
 		{
 			CurrentPlayerChatText--;
 			WordBubbleInterpolator = 0;
 			WordBubbleInterpoleDirection = -1;
 		}
 		
-		if(WordBubbleInterpolator < 1f)
-		{
-			WordBubbleInterpolator += Time.deltaTime * WordBubbleInterpolationRate;
-			if(WordBubbleInterpolator > 1f)
-				WordBubbleInterpolator = 1;
-		}
-		
 		if(ScriptToEnable[CurrentNPCChatText] != null && ScriptToEnable[CurrentNPCChatText].enabled == false)
 		{
 			ScriptToEnable[CurrentNPCChatText].enabled = true;
-		}
-		
+		}		
 	}
 	
 	void OnGUI()
@@ -159,40 +179,51 @@ public class ConversationManager : MonoBehaviour
 		{
 			GUIStyle MyGuiStyle = new GUIStyle();
 			
-			//create a gui text object and word bubble for the NPC
-			if(CurrentNPCGuiText == null)
+			if(NPCResponseTimer <= 0)
 			{
-				//spawn text object over NPC
-				CurrentNPCGuiText = new GameObject(gameObject.name + " Speach Text");
-				CurrentNPCGuiText.AddComponent("GUIText");
-				CurrentNPCGuiText.guiText.color = Color.black;
-				//spawn speach bubble texture object over NPC
-				CurrentNPCWordBubble = new GameObject(gameObject.name + " Word Bubble");
-				CurrentNPCWordBubble.AddComponent("GUITexture");
-				CurrentNPCWordBubble.guiTexture.texture = WordBubble;
-				CurrentNPCWordBubble.transform.position = Vector3.zero;
-				CurrentNPCWordBubble.transform.localScale = Vector3.zero;
+				//create a gui text object and word bubble for the NPC
+				if(CurrentNPCGuiText == null)
+				{
+					//spawn text object over NPC
+					CurrentNPCGuiText = new GameObject(gameObject.name + " Speach Text");
+					CurrentNPCGuiText.AddComponent("GUIText");
+					CurrentNPCGuiText.guiText.color = Color.black;
+					//spawn speach bubble texture object over NPC
+					CurrentNPCWordBubble = new GameObject(gameObject.name + " Word Bubble");
+					CurrentNPCWordBubble.AddComponent("GUITexture");
+					CurrentNPCWordBubble.guiTexture.texture = WordBubble;
+					CurrentNPCWordBubble.transform.position = Vector3.zero;
+					CurrentNPCWordBubble.transform.localScale = Vector3.zero;
+				}
+				
+				//draw text inside the word bubble, positioned over the NPC
+				CurrentNPCGuiText.transform.position = Player.GetComponentInChildren<Camera>().WorldToViewportPoint(HeadPos.transform.position + NPCTextPosition);
+				//CurrentNPCWordBubble.guiTexture.pixelInset = new Rect(Player.GetComponentInChildren<Camera>().WorldToScreenPoint(HeadPos.transform.position).x - (WordBubbleSize.x / 2), Player.GetComponentInChildren<Camera>().WorldToScreenPoint(HeadPos.transform.position).y, WordBubbleSize.x, WordBubbleSize.y);
+				Vector3 NPCWordBubblePosition;
+				NPCWordBubblePosition = new Vector3((CurrentNPCGuiText.transform.position.x * Screen.width) + (WordBubbleOffset.x * Screen.width), (CurrentNPCGuiText.transform.position.y * Screen.height) + (WordBubbleOffset.y * Screen.height) - WordBubbleSize.y, CurrentNPCGuiText.transform.position.z);
+				CurrentNPCWordBubble.guiTexture.pixelInset = new Rect(NPCWordBubblePosition.x, NPCWordBubblePosition.y, WordBubbleSize.x, WordBubbleSize.y);
+				
+				//say the correct text
+				CurrentNPCGuiText.GetComponent<GUIText>().text = NpcChatText[CurrentNPCChatText];
 			}
-			
-			//draw text inside the word bubble, positioned over the NPC
-			CurrentNPCGuiText.transform.position = Player.GetComponentInChildren<Camera>().WorldToViewportPoint(HeadPos.transform.position + NPCTextPosition);
-			//CurrentNPCWordBubble.guiTexture.pixelInset = new Rect(Player.GetComponentInChildren<Camera>().WorldToScreenPoint(HeadPos.transform.position).x - (WordBubbleSize.x / 2), Player.GetComponentInChildren<Camera>().WorldToScreenPoint(HeadPos.transform.position).y, WordBubbleSize.x, WordBubbleSize.y);
-			Vector3 NPCWordBubblePosition;
-			NPCWordBubblePosition = new Vector3((CurrentNPCGuiText.transform.position.x * Screen.width) + (WordBubbleOffset.x * Screen.width), (CurrentNPCGuiText.transform.position.y * Screen.height) + (WordBubbleOffset.y * Screen.height) - WordBubbleSize.y, CurrentNPCGuiText.transform.position.z);
-			CurrentNPCWordBubble.guiTexture.pixelInset = new Rect(NPCWordBubblePosition.x, NPCWordBubblePosition.y, WordBubbleSize.x, WordBubbleSize.y);
-			
-			//say the correct text
-			CurrentNPCGuiText.GetComponent<GUIText>().text = NpcChatText[CurrentNPCChatText];
+			else
+			{
+				Destroy(CurrentNPCGuiText);
+				Destroy(CurrentNPCWordBubble);
+			}
 			
 			//search to find all the chat texts that respond to the current NPC chat text
 			int NumberOfResponses = 0;//the number of responses relevent to this stage of the conversation
 			CurrentResponsesAvailable = new int[0];//a list of the array values deemed relevent for this stage of the conversation
-			for(int i = 0; i < PlayerChatText.Length; i++)
+			if(PlayerResponseTimer <= 0)
 			{
-				if(PlayerChatResponceTo[i] == CurrentNPCChatText)
+				for(int i = 0; i < PlayerChatText.Length; i++)
 				{
-					NumberOfResponses++;
-					AddIntToArray(ref CurrentResponsesAvailable, i);
+					if(PlayerChatResponceTo[i] == CurrentNPCChatText)
+					{
+						NumberOfResponses++;
+						AddIntToArray(ref CurrentResponsesAvailable, i);
+					}
 				}
 			}
 			
