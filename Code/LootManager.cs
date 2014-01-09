@@ -11,6 +11,7 @@ public class LootManager : MonoBehaviour
 	public GameObject[] ReactsWith;
 	public GameObject[] Creates;
 	public bool[] DestroyOnCombine;
+	public bool TossNewItem = true;
 	//private SphereCollider mySphereCollider;
 	[HideInInspector] public bool CanCombine = false;
 	
@@ -46,7 +47,9 @@ public class LootManager : MonoBehaviour
 				{
 					GameObject newLoot = (GameObject)Instantiate(Creates[i], transform.position, transform.rotation);
 					newLoot.name = Creates[i].name;
-					newLoot.rigidbody.velocity = new Vector3(Random.Range(-2, 2), 2, Random.Range(-2, 2));
+					
+					if(TossNewItem)
+						newLoot.rigidbody.velocity = new Vector3(Random.Range(-2, 2), 2, Random.Range(-2, 2));
 					
 					//destroy other if need be
 					for(int j = 0; j < other.GetComponent<LootManager>().DestroyOnCombine.Length; j++)
