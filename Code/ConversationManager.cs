@@ -8,23 +8,23 @@ public class ConversationManager : MonoBehaviour
 	//reference to the players mouth vector
 	private Transform PlayerMouthVec;
 	//NPC's trust level
-	public int Trust = 100;
+	private int Trust = 100;
 	//NPC's head position
 	public GameObject HeadPos;
 	//Can the player chat with this character?
-	public bool CanChat = false;
+	private bool CanChat = false;
 	//Is the NPC currently chatting?
-	public bool IsChatting = false;
+	private bool IsChatting = false;
 	//reference to word bubble texture
 	public Texture WordBubble;
 	//The default size of a word bubble
-	public Vector2 WordBubbleSize;
+	private Vector2 WordBubbleSize = new Vector2(200, 150);
 	//the offset for the word bubble to allign it round the text
-	public Vector3 WordBubbleOffset;
+	private Vector3 WordBubbleOffset = new Vector3(-0.03f, 0.03f, 0);
 	//The default starting position of text
-	public Vector3 NPCTextPosition;
+	private Vector3 NPCTextPosition = new Vector3(1, 2.5f, 0);
 	//pause timer between a player response and the NPC text
-	public float NPCResponseTime;
+	private float NPCResponseTime = 0.25f;
 	private float NPCResponseTimer = 0;
 	
 	//The various chat texts of the NPC's
@@ -32,19 +32,19 @@ public class ConversationManager : MonoBehaviour
 	//a script that is to be enabled on a particular NPC chat event
 	public MonoBehaviour[] ScriptToEnable;
 	//The current chat text being spoken by the NPC
-	private int CurrentNPCChatText = 0;
+	[HideInInspector]public int CurrentNPCChatText = 0;
 	
 	//the default positioning of the players chat text
-	public Vector3 PlayerChatTextPosition;
-	public Vector3 PlayerChatCircleSize;
-	public Vector3 PlayerChatCircleAngle;
+	private Vector3 PlayerChatTextPosition = new Vector3(1, 4, 0);
+	private Vector3 PlayerChatCircleSize = new Vector3(0, 0.15f, 0);
+	private Vector3 PlayerChatCircleAngle = new Vector3(0, 1, 0.4f);
 	//pause timer between a NPC response and the Player text
-	public float PlayerResponseTime;
+	private float PlayerResponseTime = 0.75f;
 	private float PlayerResponseTimer = 0;
 	//used to interpoloate player word bubbles, between 0 and 1
 	private float WordBubbleInterpolator = 1;
 	//the rate at which the word bubbles rotate
-	public float WordBubbleInterpolationRate;
+	private float WordBubbleInterpolationRate = 1.5f;
 	//the direction it should be interpolating
 	private int WordBubbleInterpoleDirection;
 	//The various things the player can say in response
@@ -118,6 +118,7 @@ public class ConversationManager : MonoBehaviour
 			Player.GetComponent<PlayerStateMachine>().InStateTill = float.PositiveInfinity;
 			
 			PlayerResponseTimer = PlayerResponseTime;
+			NPCResponseTimer = 0;
 		}
 		//end a chat
 		else if(IsChatting && Input.GetKeyDown(KeyCode.G) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting)
@@ -126,7 +127,7 @@ public class ConversationManager : MonoBehaviour
 			Player.GetComponent<PlayerStateMachine>().MyPlayerState = PlayerStateMachine.PlayerState.None;
 		}
 		//Select chat player option
-		else if(IsChatting && Input.GetKeyDown(KeyCode.E) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting)
+		else if(IsChatting && Input.GetKeyDown(KeyCode.E) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && PlayerResponseTimer <= 0 && NPCResponseTimer <= 0)
 		{
 			//Set the NPC's chat text to whatever the players selected chat text leads to
 			CurrentNPCChatText = PlayerChatLeadsTo[CurrentPlayerChatArray];
@@ -140,6 +141,7 @@ public class ConversationManager : MonoBehaviour
 			{
 				Destroy(loopObj);	
 			}
+			
 			CurrentPlayerGUITexts = new GameObject[0];
 			CurrentPlayerWordBubbles = new GameObject[0];
 			
@@ -153,14 +155,14 @@ public class ConversationManager : MonoBehaviour
 			NPCResponseTimer = NPCResponseTime;
 		}
 		//cycle left through player chat options
-		else if(IsChatting && Input.GetKeyDown(KeyCode.A) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1)
+		else if(IsChatting && Input.GetKeyDown(KeyCode.A) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1 && PlayerResponseTimer <= 0 && NPCResponseTimer <= 0)
 		{
 			CurrentPlayerChatText++;
 			WordBubbleInterpolator = 0;
 			WordBubbleInterpoleDirection = 1;
 		}
 		//cycle right through player chat options
-		else if(IsChatting && Input.GetKeyDown(KeyCode.D) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1)
+		else if(IsChatting && Input.GetKeyDown(KeyCode.D) && Player.GetComponent<PlayerStateMachine>().MyPlayerState == PlayerStateMachine.PlayerState.Chatting && WordBubbleInterpolator == 1 && CurrentResponsesAvailable.Length > 1 && PlayerResponseTimer <= 0 && NPCResponseTimer <= 0)
 		{
 			CurrentPlayerChatText--;
 			WordBubbleInterpolator = 0;
@@ -212,11 +214,11 @@ public class ConversationManager : MonoBehaviour
 				Destroy(CurrentNPCWordBubble);
 			}
 			
-			//search to find all the chat texts that respond to the current NPC chat text
-			int NumberOfResponses = 0;//the number of responses relevent to this stage of the conversation
-			CurrentResponsesAvailable = new int[0];//a list of the array values deemed relevent for this stage of the conversation
 			if(PlayerResponseTimer <= 0)
 			{
+				//search to find all the chat texts that respond to the current NPC chat text
+				int NumberOfResponses = 0;//the number of responses relevent to this stage of the conversation
+				CurrentResponsesAvailable = new int[0];//a list of the array values deemed relevent for this stage of the conversation
 				for(int i = 0; i < PlayerChatText.Length; i++)
 				{
 					if(PlayerChatResponceTo[i] == CurrentNPCChatText)
@@ -225,81 +227,81 @@ public class ConversationManager : MonoBehaviour
 						AddIntToArray(ref CurrentResponsesAvailable, i);
 					}
 				}
-			}
-			
-			//do a check, if the CurrentPlayerChatText is out of bounds, loop it around
-			if(CurrentPlayerChatText < 0)
-				CurrentPlayerChatText = NumberOfResponses - 1;
-			else if(CurrentPlayerChatText > NumberOfResponses - 1)
-				CurrentPlayerChatText = 0;
-			
-			CurrentPlayerChatArray = CurrentResponsesAvailable[CurrentPlayerChatText];
-			
-			//Make sure the correct number of word bubble texture and GUIText objects are spawned
-			if(CurrentPlayerGUITexts.Length != NumberOfResponses)
-			{
-				//destroy the old objects
-				foreach(GameObject loopObj in CurrentPlayerGUITexts)
-				{
-					Destroy(loopObj);	
-				}
-				//reset the string size
-				CurrentPlayerGUITexts = new GameObject[NumberOfResponses];
 				
-				//create new objects
-				for(int i = 0; i < CurrentPlayerGUITexts.Length; i++)
-				{
-					CurrentPlayerGUITexts[i] = new GameObject(Player.gameObject.name + " Speach Text");
-					CurrentPlayerGUITexts[i].AddComponent("GUIText");
-					CurrentPlayerGUITexts[i].guiText.color = Color.black;
-				}
-			}
-			if(CurrentPlayerWordBubbles.Length != NumberOfResponses)
-			{
-				//destroy the old objects
-				foreach(GameObject loopObj in CurrentPlayerWordBubbles)
-				{
-					Destroy(loopObj);	
-				}
-				//reset the string size
-				CurrentPlayerWordBubbles = new GameObject[NumberOfResponses];
+				//do a check, if the CurrentPlayerChatText is out of bounds, loop it around
+				if(CurrentPlayerChatText < 0)
+					CurrentPlayerChatText = NumberOfResponses - 1;
+				else if(CurrentPlayerChatText > NumberOfResponses - 1)
+					CurrentPlayerChatText = 0;
 				
-				//create new objects
+				CurrentPlayerChatArray = CurrentResponsesAvailable[CurrentPlayerChatText];
+			
+				//Make sure the correct number of word bubble texture and GUIText objects are spawned
+				if(CurrentPlayerGUITexts.Length != NumberOfResponses)
+				{
+					//destroy the old objects
+					foreach(GameObject loopObj in CurrentPlayerGUITexts)
+					{
+						Destroy(loopObj);	
+					}
+					//reset the string size
+					CurrentPlayerGUITexts = new GameObject[NumberOfResponses];
+					
+					//create new objects
+					for(int i = 0; i < CurrentPlayerGUITexts.Length; i++)
+					{
+						CurrentPlayerGUITexts[i] = new GameObject(Player.gameObject.name + " Speach Text");
+						CurrentPlayerGUITexts[i].AddComponent("GUIText");
+						CurrentPlayerGUITexts[i].guiText.color = Color.black;
+					}
+				}
+				if(CurrentPlayerWordBubbles.Length != NumberOfResponses)
+				{
+					//destroy the old objects
+					foreach(GameObject loopObj in CurrentPlayerWordBubbles)
+					{
+						Destroy(loopObj);	
+					}
+					//reset the string size
+					CurrentPlayerWordBubbles = new GameObject[NumberOfResponses];
+					
+					//create new objects
+					for(int i = 0; i < CurrentPlayerWordBubbles.Length; i++)
+					{
+						CurrentPlayerWordBubbles[i] = new GameObject(Player.gameObject.name + " World Bubbles");
+						CurrentPlayerWordBubbles[i].AddComponent("GUITexture");
+						CurrentPlayerWordBubbles[i].guiTexture.texture = WordBubble;
+						CurrentPlayerWordBubbles[i].transform.position = Vector3.zero;
+						CurrentPlayerWordBubbles[i].transform.localScale = Vector3.zero;
+					}
+					
+					//initialize the first default chat response
+					CurrentPlayerChatText = CurrentResponsesAvailable[0];
+				}
+				
+				//Position, fill, and size all the word bubbles and texts
+				//TODO: When changing word bubbles, lerp the position so the word bubbles more clearly appear to rotate
 				for(int i = 0; i < CurrentPlayerWordBubbles.Length; i++)
-				{
-					CurrentPlayerWordBubbles[i] = new GameObject(Player.gameObject.name + " World Bubbles");
-					CurrentPlayerWordBubbles[i].AddComponent("GUITexture");
-					CurrentPlayerWordBubbles[i].guiTexture.texture = WordBubble;
-					CurrentPlayerWordBubbles[i].transform.position = Vector3.zero;
-					CurrentPlayerWordBubbles[i].transform.localScale = Vector3.zero;
+				{				
+					GameObject WordBubblePosition = new GameObject("WordBubblePositioner");
+					//position text
+					WordBubblePosition.transform.position = Player.GetComponentInChildren<Camera>().WorldToViewportPoint(PlayerMouthVec.position  + PlayerChatTextPosition);
+					WordBubblePosition.transform.RotateAround(Player.GetComponentInChildren<Camera>().WorldToViewportPoint(PlayerMouthVec.position + PlayerChatTextPosition + PlayerChatCircleSize), PlayerChatCircleAngle.normalized, (i * (360f / NumberOfResponses)) + ((CurrentPlayerChatText + (WordBubbleInterpoleDirection * -1) + WordBubbleInterpolator * WordBubbleInterpoleDirection) * (360f / NumberOfResponses)));
+					
+					CurrentPlayerGUITexts[i].transform.position = WordBubblePosition.transform.position;
+					CurrentPlayerGUITexts[i].guiText.color = Color.black;
+					CurrentPlayerGUITexts[i].guiText.text = PlayerChatText[CurrentResponsesAvailable[i]];
+					
+					//position word bubble
+					WordBubblePosition.transform.position = new Vector3((WordBubblePosition.transform.position.x * Screen.width) + (WordBubbleOffset.x * Screen.width), (WordBubblePosition.transform.position.y * Screen.height) + (WordBubbleOffset.y * Screen.height) - WordBubbleSize.y, WordBubblePosition.transform.position.z);
+					float ScaleValue = Mathf.Abs(0 - WordBubblePosition.transform.position.z) / 180f; //a value between 0 and 1 that lets me know how what position something is at % wise.  0 = front, 1 = back
+					
+					CurrentPlayerWordBubbles[i].transform.position = new Vector3(0, 0, WordBubblePosition.transform.position.z);
+					CurrentPlayerWordBubbles[i].guiTexture.pixelInset = new Rect(WordBubblePosition.transform.position.x, WordBubblePosition.transform.position.y, WordBubbleSize.x, WordBubbleSize.y);	
+					
+					//clean up the transformer so we dont fill the scene with dead transforms
+					GameObject.Destroy(WordBubblePosition.gameObject);
 				}
-				
-				//initialize the first default chat response
-				CurrentPlayerChatText = CurrentResponsesAvailable[0];
-			}
-			
-			//Position, fill, and size all the word bubbles and texts
-			//TODO: When changing word bubbles, lerp the position so the word bubbles more clearly appear to rotate
-			for(int i = 0; i < CurrentPlayerWordBubbles.Length; i++)
-			{				
-				GameObject WordBubblePosition = new GameObject("WordBubblePositioner");
-				//position text
-				WordBubblePosition.transform.position = Player.GetComponentInChildren<Camera>().WorldToViewportPoint(PlayerMouthVec.position  + PlayerChatTextPosition);
-				WordBubblePosition.transform.RotateAround(Player.GetComponentInChildren<Camera>().WorldToViewportPoint(PlayerMouthVec.position + PlayerChatTextPosition + PlayerChatCircleSize), PlayerChatCircleAngle.normalized, (i * (360f / NumberOfResponses)) + ((CurrentPlayerChatText + (WordBubbleInterpoleDirection * -1) + WordBubbleInterpolator * WordBubbleInterpoleDirection) * (360f / NumberOfResponses)));
-				
-				CurrentPlayerGUITexts[i].transform.position = WordBubblePosition.transform.position;
-				CurrentPlayerGUITexts[i].guiText.color = Color.black;
-				CurrentPlayerGUITexts[i].guiText.text = PlayerChatText[CurrentResponsesAvailable[i]];
-				
-				//position word bubble
-				WordBubblePosition.transform.position = new Vector3((WordBubblePosition.transform.position.x * Screen.width) + (WordBubbleOffset.x * Screen.width), (WordBubblePosition.transform.position.y * Screen.height) + (WordBubbleOffset.y * Screen.height) - WordBubbleSize.y, WordBubblePosition.transform.position.z);
-				float ScaleValue = Mathf.Abs(0 - WordBubblePosition.transform.position.z) / 180f; //a value between 0 and 1 that lets me know how what position something is at % wise.  0 = front, 1 = back
-				
-				CurrentPlayerWordBubbles[i].transform.position = new Vector3(0, 0, WordBubblePosition.transform.position.z);
-				CurrentPlayerWordBubbles[i].guiTexture.pixelInset = new Rect(WordBubblePosition.transform.position.x, WordBubblePosition.transform.position.y, WordBubbleSize.x, WordBubbleSize.y);	
-				
-				//clean up the transformer so we dont fill the scene with dead transforms
-				GameObject.Destroy(WordBubblePosition.gameObject);
 			}
 		}
 		else
