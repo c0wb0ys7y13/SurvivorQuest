@@ -29,9 +29,7 @@ public class rpgCharController : MonoBehaviour
 	void Update()
 	{
 		if(MyStateMachine.MyPlayerState == PlayerStateMachine.PlayerState.None)
-		{
-			//Velocity = new Vector3(0,0,0);
-			
+		{			
 			if(Input.GetKey(KeyCode.A) &&
 			   	!Input.GetKey(KeyCode.D) &&
 				!(Velocity.x < 0))
@@ -101,27 +99,6 @@ public class rpgCharController : MonoBehaviour
 			{
 				Velocity = Velocity.normalized * WalkSpeed;
 			}
-			
-			//choose my facing
-			/*
-			float DotProduct = Vector3.Dot(new Vector3(-1, 0, 0), Velocity);
-			MyFacing = Facing.Right;
-			if(DotProduct < Vector3.Dot(new Vector3(1, 0, 0), Velocity))
-			{
-				DotProduct = Vector3.Dot(new Vector3(1, 0, 0), Velocity);
-				MyFacing = Facing.Left;
-			}
-			if(DotProduct < Vector3.Dot(new Vector3(0, 0, -1), Velocity))
-			{
-				DotProduct = Vector3.Dot(new Vector3(0, 0, -1), Velocity);
-				MyFacing = Facing.Up;
-			}
-			if(DotProduct < Vector3.Dot(new Vector3(0, 0, 1), Velocity))
-			{
-				DotProduct = Vector3.Dot(new Vector3(0, 0, 1), Velocity);
-				MyFacing = Facing.Down;
-			}
-			*/
 			
 			//apply velocity to RB
 			rigidbody.velocity = Velocity + new Vector3(0, rigidbody.velocity.y, 0);

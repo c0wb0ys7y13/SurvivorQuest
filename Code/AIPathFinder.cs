@@ -12,6 +12,7 @@ public class AIPathFinder : MonoBehaviour
 
 	public Transform target;					// Target/final point to build path to
 	public Vector3[] waypoints;			        // Array of generated waypoints
+	public bool DumbPathFinding;				//Turning this on will make this AI move in a streight line to the target
 	public int maxComplexity = 15;				// Max number of waypoins in path
 	public float maxLookingDistance = 50.0f;		// Max distance of raycasts
 	public float offsetFromObstacles = 1;			// Set additional offset between waypoints and  obstacles
@@ -116,7 +117,7 @@ public class AIPathFinder : MonoBehaviour
 			
 		    // Raycast from last finded waypoint to choosed direction (straight to target or around current obstacle)
 			LayerMask Mask = LayerMask.NameToLayer("AICollider");
-		 	if(Physics.Raycast(ray, out hit, lookingDistance, Mask) && hit.collider.transform != target) 
+		 	if(!DumbPathFinding && Physics.Raycast(ray, out hit, lookingDistance, Mask) && hit.collider.transform != target) 
 			{  
 				// If there is  obstacle - create new  waypoint in front of it
 			    raycastedPoint = ray.GetPoint(hit.distance-offsetFromObstacles) - UpwardsBuffer;

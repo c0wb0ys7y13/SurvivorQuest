@@ -6,13 +6,13 @@ public class SpriteAnimator : MonoBehaviour
 	//the plane 
 	private MeshRenderer CharMesh;
 	//our current sprite sheet
-	public Material SpriteSheet;
-	public bool playBackwards = false;
-	public bool FlipMaterial = false;
+	[HideInInspector] public Material SpriteSheet;
+	[HideInInspector] public bool playBackwards = false;
+	[HideInInspector] public bool FlipMaterial = false;
 	//next sprite sheet to play after this ones finished, if any
-	public Material NextSpriteSheet = null;
-	public bool NextPlayBackwards = false;
-	public bool NextFlipMaterial = false;
+	[HideInInspector] public Material NextSpriteSheet = null;
+	[HideInInspector] public bool NextPlayBackwards = false;
+	[HideInInspector] public bool NextFlipMaterial = false;
 	//The number of frames in the sprite sheet
 	private int FramesInSpriteSheet;
 	//Current frame our sprite is in
